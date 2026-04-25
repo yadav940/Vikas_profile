@@ -1,194 +1,159 @@
-/* ============================================
-   VIKAS YADAV PORTFOLIO – INTERACTIVE SCRIPTS
-   ============================================ */
+/* ==============================================
+   VIKAS YADAV PORTFOLIO — SCRIPTS
+   ============================================== */
 
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', () => {
 
-    /* ---- Mobile Nav ---- */
-    const navToggle = document.getElementById('navToggle');
-    const navMenu   = document.getElementById('navMenu');
-    const navLinks  = document.querySelectorAll('.nav-link');
+  /* ── MOBILE NAV ── */
+  const navToggle = document.getElementById('navToggle');
+  const navMenu   = document.getElementById('navMenu');
 
-    if (navToggle) {
-        navToggle.addEventListener('click', () => navMenu.classList.toggle('active'));
-    }
+  navToggle?.addEventListener('click', () => navMenu.classList.toggle('active'));
 
-    navLinks.forEach(link => {
-        link.addEventListener('click', () => navMenu.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', () => navMenu.classList.remove('active'));
+  });
+
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.navbar')) navMenu.classList.remove('active');
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') navMenu.classList.remove('active');
+  });
+
+  /* ── SMOOTH SCROLL ── */
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const target = document.querySelector(a.getAttribute('href'));
+      if (!target) return;
+      e.preventDefault();
+      window.scrollTo({ top: target.offsetTop - 72, behavior: 'smooth' });
     });
+  });
 
-    document.addEventListener('click', e => {
-        if (!e.target.closest('.navbar') && navMenu.classList.contains('active')) {
-            navMenu.classList.remove('active');
-        }
+  /* ── NAVBAR SCROLL EFFECTS ── */
+  const navbar = document.getElementById('navbar');
+
+  const onScroll = () => {
+    const y = window.pageYOffset;
+
+    // shadow on scroll
+    navbar.classList.toggle('scrolled', y > 40);
+
+    // active nav link
+    let current = '';
+    document.querySelectorAll('section[id]').forEach(sec => {
+      if (y >= sec.offsetTop - 120) current = sec.id;
     });
-
-    document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') navMenu.classList.remove('active');
+    document.querySelectorAll('.nav-link').forEach(link => {
+      const href = link.getAttribute('href');
+      link.classList.toggle('active', href === '#' + current);
     });
+  };
 
-    /* ---- Smooth scroll ---- */
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-            const href = this.getAttribute('href');
-            if (href === '#') return;
-            e.preventDefault();
-            const target = document.querySelector(href);
-            if (target) {
-                window.scrollTo({ top: target.offsetTop - 68, behavior: 'smooth' });
-            }
-        });
+  window.addEventListener('scroll', onScroll, { passive: true });
+
+  /* ── SCROLL REVEAL ── */
+  const revealTargets = [
+    '.sk-card', '.proj-card', '.edu-card', '.cert-card',
+    '.ct-card', '.tl-item', '.story-card', '.meta-item'
+  ];
+
+  revealTargets.forEach(sel => {
+    document.querySelectorAll(sel).forEach(el => el.classList.add('reveal'));
+  });
+
+  const revealObs = new IntersectionObserver(entries => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => entry.target.classList.add('visible'), i * 70);
+        revealObs.unobserve(entry.target);
+      }
     });
+  }, { threshold: 0.08, rootMargin: '0px 0px -30px 0px' });
 
-    /* ---- Active nav on scroll ---- */
-    window.addEventListener('scroll', () => {
-        let current = '';
-        document.querySelectorAll('section[id]').forEach(sec => {
-            if (window.pageYOffset >= sec.offsetTop - 160) current = sec.getAttribute('id');
-        });
-        navLinks.forEach(link => {
-            link.classList.toggle('active', link.getAttribute('href') === '#' + current);
-        });
+  document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
 
-        // navbar shadow on scroll
-        const navbar = document.querySelector('.navbar');
-        navbar.style.boxShadow = window.pageYOffset > 50
-            ? '0 4px 24px rgba(0,0,0,0.25)'
-            : '0 2px 16px rgba(0,0,0,0.18)';
+  /* ── STAT COUNTERS ── */
+  const counterObs = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const el     = entry.target;
+      const target = parseInt(el.dataset.val, 10);
+      let count    = 0;
+      const step   = Math.ceil(target / 40);
+      const timer  = setInterval(() => {
+        count = Math.min(count + step, target);
+        el.textContent = count;
+        if (count >= target) clearInterval(timer);
+      }, 30);
+      counterObs.unobserve(el);
     });
+  }, { threshold: 0.5 });
 
-    /* ---- Scroll-reveal animations ---- */
-    const animatable = [
-        '.skill-card', '.project-card', '.education-card',
-        '.certification-item', '.contact-card', '.timeline-item',
-        '.gallery-item', '.info-item'
-    ];
-    animatable.forEach(sel => {
-        document.querySelectorAll(sel).forEach(el => el.classList.add('animate-on-scroll'));
+  document.querySelectorAll('[data-val]').forEach(el => counterObs.observe(el));
+
+  /* ── LIGHTBOX ── */
+  const overlay    = document.getElementById('lbOverlay');
+  const lbImg      = document.getElementById('lbImg');
+  const lbCaption  = document.getElementById('lbCaption');
+  const btnClose   = document.getElementById('lbClose');
+  const btnPrev    = document.getElementById('lbPrev');
+  const btnNext    = document.getElementById('lbNext');
+
+  let pool  = [];   // all .story-card in current chapter
+  let index = 0;
+
+  function openLb(cards, idx) {
+    pool  = cards;
+    index = idx;
+    showSlide();
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLb() {
+    overlay.classList.remove('open');
+    document.body.style.overflow = '';
+    lbImg.src = '';
+  }
+
+  function showSlide() {
+    const card  = pool[index];
+    const img   = card.querySelector('.sc-img img');
+    lbImg.src         = img.src;
+    lbImg.alt         = img.alt;
+    lbCaption.textContent = card.querySelector('.sc-body h4')?.textContent || '';
+
+    btnPrev.style.display = pool.length > 1 ? 'flex' : 'none';
+    btnNext.style.display = pool.length > 1 ? 'flex' : 'none';
+  }
+
+  // Click on story card → open lightbox with all siblings
+  document.querySelectorAll('.journey-chapter').forEach(chapter => {
+    const cards = Array.from(chapter.querySelectorAll('.story-card'));
+    cards.forEach((card, i) => {
+      card.addEventListener('click', () => openLb(cards, i));
     });
+  });
 
-    const revealObserver = new IntersectionObserver(entries => {
-        entries.forEach((entry, i) => {
-            if (entry.isIntersecting) {
-                setTimeout(() => entry.target.classList.add('visible'), i * 60);
-                revealObserver.unobserve(entry.target);
-            }
-        });
-    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+  btnClose.addEventListener('click', closeLb);
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeLb(); });
 
-    document.querySelectorAll('.animate-on-scroll').forEach(el => revealObserver.observe(el));
+  btnPrev.addEventListener('click', () => { index = (index - 1 + pool.length) % pool.length; showSlide(); });
+  btnNext.addEventListener('click', () => { index = (index + 1) % pool.length; showSlide(); });
 
-    /* ---- Stat counters ---- */
-    const counterObserver = new IntersectionObserver(entries => {
-        entries.forEach(entry => {
-            if (!entry.isIntersecting) return;
-            const el = entry.target;
-            const target = parseInt(el.getAttribute('data-value'), 10);
-            let count = 0;
-            const step = Math.ceil(target / 40);
-            const timer = setInterval(() => {
-                count = Math.min(count + step, target);
-                el.textContent = count;
-                if (count >= target) clearInterval(timer);
-            }, 30);
-            counterObserver.unobserve(el);
-        });
-    }, { threshold: 0.5 });
+  document.addEventListener('keydown', e => {
+    if (!overlay.classList.contains('open')) return;
+    if (e.key === 'Escape')     closeLb();
+    if (e.key === 'ArrowLeft')  { index = (index - 1 + pool.length) % pool.length; showSlide(); }
+    if (e.key === 'ArrowRight') { index = (index + 1) % pool.length; showSlide(); }
+  });
 
-    document.querySelectorAll('[data-value]').forEach(el => counterObserver.observe(el));
-
-    /* ---- Gallery Tabs ---- */
-    const tabs   = document.querySelectorAll('.gallery-tab');
-    const panels = document.querySelectorAll('.gallery-panel');
-
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            const target = tab.getAttribute('data-tab');
-
-            tabs.forEach(t => t.classList.remove('active'));
-            panels.forEach(p => p.classList.remove('active'));
-
-            tab.classList.add('active');
-            const panel = document.getElementById('tab-' + target);
-            if (panel) panel.classList.add('active');
-
-            // re-trigger reveal for newly shown items
-            panel && panel.querySelectorAll('.gallery-item').forEach((el, i) => {
-                el.classList.remove('visible');
-                setTimeout(() => el.classList.add('visible'), i * 60 + 50);
-            });
-        });
-    });
-
-    /* ---- Lightbox ---- */
-    const lightbox       = document.getElementById('lightbox');
-    const lightboxImg    = document.getElementById('lightboxImg');
-    const lightboxCaption = document.getElementById('lightboxCaption');
-    const btnClose       = document.getElementById('lightboxClose');
-    const btnPrev        = document.getElementById('lightboxPrev');
-    const btnNext        = document.getElementById('lightboxNext');
-
-    let currentItems = [];
-    let currentIndex = 0;
-
-    function openLightbox(items, index) {
-        currentItems = items;
-        currentIndex = index;
-        showLightboxSlide();
-        lightbox.classList.add('open');
-        document.body.style.overflow = 'hidden';
-    }
-
-    function closeLightbox() {
-        lightbox.classList.remove('open');
-        document.body.style.overflow = '';
-    }
-
-    function showLightboxSlide() {
-        const item = currentItems[currentIndex];
-        lightboxImg.src    = item.getAttribute('data-src');
-        lightboxImg.alt    = item.querySelector('img').getAttribute('alt') || '';
-        lightboxCaption.textContent = item.getAttribute('data-caption') || '';
-
-        btnPrev.style.display = currentItems.length > 1 ? 'flex' : 'none';
-        btnNext.style.display = currentItems.length > 1 ? 'flex' : 'none';
-    }
-
-    document.querySelectorAll('.gallery-panel').forEach(panel => {
-        panel.addEventListener('click', e => {
-            const item = e.target.closest('.gallery-item');
-            if (!item) return;
-            const items = Array.from(panel.querySelectorAll('.gallery-item'));
-            openLightbox(items, items.indexOf(item));
-        });
-    });
-
-    btnClose.addEventListener('click', closeLightbox);
-
-    btnPrev.addEventListener('click', () => {
-        currentIndex = (currentIndex - 1 + currentItems.length) % currentItems.length;
-        showLightboxSlide();
-    });
-
-    btnNext.addEventListener('click', () => {
-        currentIndex = (currentIndex + 1) % currentItems.length;
-        showLightboxSlide();
-    });
-
-    lightbox.addEventListener('click', e => {
-        if (e.target === lightbox) closeLightbox();
-    });
-
-    document.addEventListener('keydown', e => {
-        if (!lightbox.classList.contains('open')) return;
-        if (e.key === 'Escape')      closeLightbox();
-        if (e.key === 'ArrowLeft')  { currentIndex = (currentIndex - 1 + currentItems.length) % currentItems.length; showLightboxSlide(); }
-        if (e.key === 'ArrowRight') { currentIndex = (currentIndex + 1) % currentItems.length; showLightboxSlide(); }
-    });
-
-    /* ---- CV download log ---- */
-    document.querySelectorAll('[href$=".pdf"]').forEach(link => {
-        link.addEventListener('click', () => console.log('CV download initiated'));
-    });
+  /* ── CV DOWNLOAD LOG ── */
+  document.querySelectorAll('[href$=".pdf"]').forEach(a =>
+    a.addEventListener('click', () => console.log('CV download'))
+  );
 
 });
