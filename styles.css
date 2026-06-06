@@ -374,6 +374,37 @@ section{padding:96px 0;position:relative}
 }
 .sc-chip--gold{background:linear-gradient(135deg,var(--gold),var(--gold-2));color:#fff}
 
+/* NIPER Gallery */
+.niper-gallery-head{
+  font-size:15px;font-weight:700;color:var(--navy);
+  margin:32px 0 16px;
+  display:flex;align-items:center;gap:10px;
+  padding-bottom:10px;border-bottom:2px solid var(--line);
+}
+.niper-gallery-head i{color:var(--teal);font-size:18px}
+.niper-gallery{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  gap:12px;
+}
+.ng-item{
+  position:relative;border-radius:12px;overflow:hidden;
+  cursor:pointer;aspect-ratio:4/3;
+  box-shadow:var(--shadow-sm);
+  transition:transform .25s var(--t),box-shadow .25s var(--t);
+}
+.ng-item:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg)}
+.ng-item img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .35s var(--t)}
+.ng-item:hover img{transform:scale(1.07)}
+.ng-label{
+  position:absolute;bottom:0;left:0;right:0;
+  background:linear-gradient(transparent,rgba(11,37,69,.85));
+  color:#fff;font-size:12px;font-weight:600;
+  padding:20px 10px 8px;
+  opacity:0;transition:opacity .25s var(--t);
+}
+.ng-item:hover .ng-label{opacity:1}
+
 .sc-body{padding:22px 22px 24px;display:flex;flex-direction:column;gap:12px;flex:1}
 .sc-body h4{font-size:16px;font-weight:700;color:var(--ink);line-height:1.35;letter-spacing:-.005em}
 .sc-body p{font-size:14px;color:var(--text);line-height:1.7}

@@ -102,11 +102,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnPrev    = document.getElementById('lbPrev');
   const btnNext    = document.getElementById('lbNext');
 
-  let pool  = [];   // all .story-card in current chapter
+  let pool  = [];
   let index = 0;
 
-  function openLb(cards, idx) {
-    pool  = cards;
+  function openLb(items, idx) {
+    pool  = items;
     index = idx;
     showSlide();
     overlay.classList.add('open');
@@ -120,21 +120,28 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function showSlide() {
-    const card  = pool[index];
-    const img   = card.querySelector('.sc-img img');
-    lbImg.src         = img.src;
-    lbImg.alt         = img.alt;
-    lbCaption.textContent = card.querySelector('.sc-body h4')?.textContent || '';
-
+    const item = pool[index];
+    const img  = item.querySelector('img');
+    lbImg.src = img.src;
+    lbImg.alt = img.alt;
+    lbCaption.textContent = item.dataset.caption || item.querySelector('.sc-body h4')?.textContent || img.alt;
     btnPrev.style.display = pool.length > 1 ? 'flex' : 'none';
     btnNext.style.display = pool.length > 1 ? 'flex' : 'none';
   }
 
-  // Click on story card → open lightbox with all siblings
+  // Story cards lightbox
   document.querySelectorAll('.journey-chapter').forEach(chapter => {
     const cards = Array.from(chapter.querySelectorAll('.story-card'));
     cards.forEach((card, i) => {
       card.addEventListener('click', () => openLb(cards, i));
+    });
+  });
+
+  // Gallery items lightbox — all .ng-item in same .niper-gallery pool together
+  document.querySelectorAll('.niper-gallery').forEach(gallery => {
+    const items = Array.from(gallery.querySelectorAll('.ng-item'));
+    items.forEach((item, i) => {
+      item.addEventListener('click', () => openLb(items, i));
     });
   });
 
